@@ -114,12 +114,14 @@ package htmlelements
 			
 			_swfContent = contentLoaderInfo.loader.content as MovieClip;
 			
-			_swfTotalFrames = _swfContent.totalFrames;
+			_swfTotalFrames = _swfContent.totalFrames; 
 
 			if(_swfContent) {
 				_swfContent.gotoAndStop(1);
 				_swfContent.addEventListener(Event.ENTER_FRAME, handleFrameEnter);
 				addChild(_swfContent);
+				
+				_duration = (_swfContent.stage != null) ? _swfTotalFrames/_swfContent.stage.frameRate : 0;
 				
 				sendEvent(HtmlMediaEvent.LOADEDDATA);
 				sendEvent(HtmlMediaEvent.CANPLAY);
@@ -136,11 +138,14 @@ package htmlelements
 		private function handleFrameEnter(e:Event):void {
 			_swfCurrentFrame = _swfContent.currentFrame;
 			_currentTime = (_swfContent.stage !=  null) ? _swfCurrentFrame / _swfContent.stage.frameRate : 0;
-			if(_swfCurrentFrame >= _swfTotalFrames) {
-				_currentTime = 0;
-				_isEnded = true;
-	
-				sendEvent(HtmlMediaEvent.ENDED);
+			if(!_isPaused) {
+				sendEvent(HtmlMediaEvent.TIMEUPDATE);
+				if(_swfCurrentFrame >= _swfTotalFrames) {
+					_currentTime = 0;
+					_isEnded = true;
+		
+					sendEvent(HtmlMediaEvent.ENDED);
+				}
 			}
 		}
 		//events
@@ -156,7 +161,7 @@ package htmlelements
 			if (_currentUrl == "")
 				return;
 			
-			_currentUrl = _currentUrl.replace("media.easy2.com", "webapps.qa");
+			_currentUrl = "http://webapps.qa/myopsui/ps_jobs/lowe200009/publish/live/media/slide1_20123614324807.swf";
 			
 			_currentTime = 0;
 			_swfCurrentFrame = 1;
@@ -177,6 +182,7 @@ package htmlelements
 				load();
 				return;
 			}
+			_isPaused = false;
 			_swfContent.gotoAndPlay(_swfCurrentFrame);
 			didStartPlaying();
 		}
@@ -184,6 +190,7 @@ package htmlelements
 		public function pause():void {
 			if(!_isAVM1Movie) {
 				_swfContent.stop();
+				_isPaused = true;
 				sendEvent(HtmlMediaEvent.PAUSE);
 			}
 		}
@@ -191,6 +198,7 @@ package htmlelements
 		public function stop():void {
 			if(!_isAVM1Movie) {
 				_swfContent.stop();
+				_isPaused = true;
 				sendEvent(HtmlMediaEvent.STOP);
 			}
 		}
@@ -201,7 +209,7 @@ package htmlelements
 				_swfCurrentFrame = (_swfContent.stage != null) ? Math.round(_swfContent.stage.frameRate * _currentTime) : 1;
 				_swfCurrentFrame = Math.max(Math.min(_swfCurrentFrame, _swfTotalFrames), 1);
 				_swfContent.gotoAndPlay(_swfCurrentFrame);
-				
+				_isPaused = false;
 				didStartPlaying();
 			}
 		}
