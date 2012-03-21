@@ -61,6 +61,7 @@ package htmlelements
 		private var _swfCurrentFrame:int = 1;
 		private var _swfTotalFrames:int;
 		private var _isAVM1Movie:Boolean = false;
+		private var _shouldCenter:Boolean = true;
 
 		public function duration():Number {
 			return _duration;
@@ -102,9 +103,12 @@ package htmlelements
 			_swfWidth = contentLoaderInfo.width;
 			_swfHeight = contentLoaderInfo.height;
 			
+			
+			
 			if(contentLoaderInfo.loader.content is AVM1Movie) {
 				_isAVM1Movie = true;
 				addChild(contentLoaderInfo.loader);
+				centerMedia(contentLoaderInfo.loader);
 				sendEvent(HtmlMediaEvent.LOADEDDATA);
 				sendEvent(HtmlMediaEvent.CANPLAY);
 				didStartPlaying();
@@ -120,7 +124,7 @@ package htmlelements
 				_swfContent.gotoAndStop(1);
 				_swfContent.addEventListener(Event.ENTER_FRAME, handleFrameEnter);
 				addChild(_swfContent);
-				
+				centerMedia(_swfContent);
 				_duration = (_swfContent.stage != null) ? _swfTotalFrames/_swfContent.stage.frameRate : 0;
 				
 				sendEvent(HtmlMediaEvent.LOADEDDATA);
@@ -133,6 +137,12 @@ package htmlelements
 				}	
 			} else {
 				handleErrors();
+			}
+		}
+		private function centerMedia(obj:DisplayObject):void {
+			if(_shouldCenter && this.stage != null) {
+				 obj.x = Math.max(0, (this.stage.stageWidth - _swfWidth)/2);
+				 obj.y = Math.max(0, (this.stage.stageHeight - _swfHeight)/2);
 			}
 		}
 		private function handleFrameEnter(e:Event):void {
@@ -160,7 +170,7 @@ package htmlelements
 		public function load():void {
 			if (_currentUrl == "")
 				return;
-			
+		
 			
 			
 			_currentTime = 0;
