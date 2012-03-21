@@ -22,6 +22,7 @@ package htmlelements
 	import flash.system.Security;
 	import flash.system.LoaderContext;
 	import flash.system.SecurityDomain;
+	import flash.display.AVM1Movie;
 
 
 
@@ -59,6 +60,7 @@ package htmlelements
 		private var _swfHeight:Number;
 		private var _swfCurrentFrame:int = 1;
 		private var _swfTotalFrames:int;
+		private var _isAVM1Movie:Boolean = false;
 
 		public function duration():Number {
 			return _duration;
@@ -86,7 +88,6 @@ package htmlelements
 		private function handleSwfLoadProgress(e:ProgressEvent):void {
 			_bytesLoaded = e.bytesLoaded;
 			_bytesTotal = e.bytesTotal;
-			trace("PROGRESS: "+e);
 			sendEvent(HtmlMediaEvent.PROGRESS);
 		}
 		private function handleErrors(e:Event = null):void {
@@ -101,12 +102,20 @@ package htmlelements
 			_swfWidth = contentLoaderInfo.width;
 			_swfHeight = contentLoaderInfo.height;
 			
+			if(contentLoaderInfo.loader.content is AVM1Movie) {
+				_isAVM1Movie = true;
+				addChild(contentLoaderInfo.loader);
+				sendEvent(HtmlMediaEvent.LOADEDDATA);
+				sendEvent(HtmlMediaEvent.CANPLAY);
+				didStartPlaying();
+				//there's not much we can do here
+				return;
+			}
+			
 			_swfContent = contentLoaderInfo.loader.content as MovieClip;
 			
-			trace("TESTING = "+contentLoaderInfo.loader.content+" "+_swfTotalFrames+" "+_swfWidth+"x"+_swfHeight);
 			_swfTotalFrames = _swfContent.totalFrames;
-			
-			
+
 			if(_swfContent) {
 				_swfContent.gotoAndStop(1);
 				_swfContent.addEventListener(Event.ENTER_FRAME, handleFrameEnter);
@@ -127,7 +136,6 @@ package htmlelements
 		private function handleFrameEnter(e:Event):void {
 			_swfCurrentFrame = _swfContent.currentFrame;
 			_currentTime = (_swfContent.stage !=  null) ? _swfCurrentFrame / _swfContent.stage.frameRate : 0;
-			trace("FRAME ENTER = "+_swfCurrentFrame+" of "+_swfTotalFrames+" "+_currentTime);
 			if(_swfCurrentFrame >= _swfTotalFrames) {
 				_currentTime = 0;
 				_isEnded = true;
@@ -169,36 +177,39 @@ package htmlelements
 				load();
 				return;
 			}
-			trace(_swfContent);
 			_swfContent.gotoAndPlay(_swfCurrentFrame);
 			didStartPlaying();
 		}
 
 		public function pause():void {
-			_swfContent.stop();
-			sendEvent(HtmlMediaEvent.PAUSE);
+			if(!_isAVM1Movie) {
+				_swfContent.stop();
+				sendEvent(HtmlMediaEvent.PAUSE);
+			}
 		}
 
 		public function stop():void {
-			_swfContent.stop();
-			sendEvent(HtmlMediaEvent.STOP);
+			if(!_isAVM1Movie) {
+				_swfContent.stop();
+				sendEvent(HtmlMediaEvent.STOP);
+			}
 		}
 
 		public function setCurrentTime(pos:Number):void {
-			_currentTime = pos;
-			_swfCurrentFrame = (_swfContent.stage != null) ? Math.round(_swfContent.stage.frameRate * _currentTime) : 1;
-			_swfCurrentFrame = Math.max(Math.min(_swfCurrentFrame, _swfTotalFrames), 1);
-			_swfContent.gotoAndPlay(_swfCurrentFrame);
-			
-			didStartPlaying();
+			if(!_isAVM1Movie) {
+				_currentTime = pos;
+				_swfCurrentFrame = (_swfContent.stage != null) ? Math.round(_swfContent.stage.frameRate * _currentTime) : 1;
+				_swfCurrentFrame = Math.max(Math.min(_swfCurrentFrame, _swfTotalFrames), 1);
+				_swfContent.gotoAndPlay(_swfCurrentFrame);
+				
+				didStartPlaying();
+			}
 		}
 		
 		private function didStartPlaying():void {
 			_isPaused = false;
 			sendEvent(HtmlMediaEvent.PLAY);
 			sendEvent(HtmlMediaEvent.PLAYING);
-			
-			trace("DID START PLAYING");
 			
 			if (!_firedCanPlay) {
 				sendEvent(HtmlMediaEvent.LOADEDDATA);
