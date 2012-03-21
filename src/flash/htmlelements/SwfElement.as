@@ -161,7 +161,7 @@ package htmlelements
 			if (_currentUrl == "")
 				return;
 			
-			_currentUrl = "http://webapps.qa/myopsui/ps_jobs/lowe200009/publish/live/media/slide1_20123614324807.swf";
+			
 			
 			_currentTime = 0;
 			_swfCurrentFrame = 1;
