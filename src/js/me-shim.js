@@ -329,7 +329,6 @@ mejs.HtmlMediaElementShim = {
 
 	formatType: function(url, type) {
 		var ext;
-
 		// if no type is supplied, fake it with the extension
 		if (url && !type) {		
 			return this.getTypeFromFile(url);
@@ -348,6 +347,8 @@ mejs.HtmlMediaElementShim = {
 	
 	getTypeFromFile: function(url) {
 		var ext = url.substring(url.lastIndexOf('.') + 1);
+		if(ext && ext.toLowerCase() == "swf") 
+			return 'application/x-shockwave-flash';
 		return (/(mp4|m4v|ogg|ogv|webm|flv|wmv|mpeg|mov)/gi.test(ext) ? 'video' : 'audio') + '/' + ext;
 	},
 
