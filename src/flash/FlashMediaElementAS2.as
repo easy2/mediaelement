@@ -1,11 +1,5 @@
 ﻿stop();
-import HtmlMediaEventAS2;
-import htmlElements.SwfElementAS2;
-import flash.geom.ColorTransform;
 
-MovieClip.prototype.getChildByName = function(mcName):MovieClip {
-	return this[mcName];
-}
 
 	var _mediaUrl:String = "";
 	 var _autoplay:Boolean;
@@ -33,7 +27,7 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 	 var _fullscreenButton:MovieClip;
 
 	// media
-	 var _mediaElement:Object; //----------------------   SwfElementAS2;
+	 var _mediaElement:SwfElementAS2;
 
 	// CONTROLS
 	 var _alwaysShowControls:Boolean;
@@ -64,13 +58,14 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 	 var _idleTime:Number;
 	 var _isMouseActive:Boolean
 	 var _isOverStage:Boolean = false;
+	 var _externalObjectId:String = "";
 
 
 	 function initFlashMediaElement():Void {
 
 		// show allow this player to be called from a different domain than the HTML page hosting the player
 		Security.allowDomain("*");
-
+		trace("initFlashMediaElement");
 		// get parameters
 		var params:Object = _root;
 		_mediaUrl = (params['file'] != undefined) ? String(params['file']) : "";
@@ -114,14 +109,15 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 		_fullscreenButton = getChildByName("fullscreen_btn");
 		//_fullscreenButton._visible = false;
 		_fullscreenButton._alpha = 0;
-		_fullscreenButton.addEventListener(MouseEvent.CLICK, fullscreenClick, false);
-		_fullscreenButton._x = stage.stageWidth - _fullscreenButton._width;
-		_fullscreenButton._y = stage.stageHeight - _fullscreenButton._height;
+		_fullscreenButton.addEventListener("onPress", fullscreenClick, false);
+		_fullscreenButton._x = Stage.width - _fullscreenButton._width;
+		_fullscreenButton._y = Stage.height - _fullscreenButton._height;
 		
 		// create media element
 		if(_isSwf) {
-			_mediaElement = new SwfElement(this, _autoplay, _preload, _timerRate, _startVolume);
-			addChild(_mediaElement);
+			var holder:MovieClip = this.createEmptyMovieClip("swfPlayerHolder", this.getNextHighestDepth());
+			trace(" new SwfElementAS2");
+			_mediaElement = new SwfElementAS2(this, _autoplay, _preload, _timerRate, _startVolume, holder);
 		} 
 
 		// controls!
@@ -143,23 +139,23 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 		
 		// New fullscreenIcon for new fullscreen floating controls
 		//if(_alwaysShowControls && _controlStyle.toUpperCase()=="FLOATING") {
-			_fullscreenIcon.addEventListener(MouseEvent.CLICK, fullScreenIconClick, false);
+			_fullscreenIcon.addEventListener("onPress", fullScreenIconClick);
 		//}
 		
 		_volumeMuted = _controlBar.getChildByName("muted_mc");
 		_volumeUnMuted = _controlBar.getChildByName("unmuted_mc");
 		
-		_volumeMuted.addEventListener(MouseEvent.CLICK, toggleVolume, false);
-		_volumeUnMuted.addEventListener(MouseEvent.CLICK, toggleVolume, false);
+		_volumeMuted.addEventListener("onPress", toggleVolume);
+		_volumeUnMuted.addEventListener("onPress",  toggleVolume);
 		
 		_playButton = _controlBar.getChildByName("play_btn");
-		_playButton.onPress = function() {
+		_playButton.addEventListener("onPress", function() {
 			_mediaElement.play();					 
-		};
+		});
 		_pauseButton = _controlBar.getChildByName("pause_btn");
-		_pauseButton.onPress = function() {
+		_pauseButton.addEventListener("onPress", function() {
 			_mediaElement.pause();					 
-		};
+		});
 		_pauseButton._visible = false;
 		_duration = _controlBar.getChildByName("duration_txt");
 		_currentTime = _controlBar.getChildByName("currentTime_txt");
@@ -172,15 +168,15 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 
 		
 		// Add new timeline scrubber events
-		_scrubOverlay.addEventListener(MouseEvent.MOUSE_MOVE, scrubMove);
-		_scrubOverlay.addEventListener(MouseEvent.CLICK, scrubClick);
-		_scrubOverlay.addEventListener(MouseEvent.MOUSE_OVER, scrubOver);
-		_scrubOverlay.addEventListener(MouseEvent.MOUSE_OUT, scrubOut);
+		_scrubOverlay.addEventListener("onMouseMove", scrubMove);
+		_scrubOverlay.addEventListener("onPress", scrubClick);
+		_scrubOverlay.addEventListener("onRollOver", scrubOver);
+		_scrubOverlay.addEventListener("onRollOut", scrubOut);
 		
 		if (_autoHide) { // && _alwaysShowControls) {
 			// Add mouse activity for show/hide of controls
-			stage.addEventListener(Event.MOUSE_LEAVE, mouseActivityLeave);
-			stage.addEventListener(MouseEvent.MOUSE_MOVE, mouseActivityMove);
+			//Stage.addEventListener(Event.MOUSE_LEAVE, mouseActivityLeave);
+			this.addEventListener("onMouseDown", mouseActivityMove);
 			_inactiveTime = 2500;
 			_autoHideTimer = setTimeout(function():Void {
 					idleTimer();
@@ -199,10 +195,9 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 		}
 
 		_controlBar._visible = _alwaysShowControls;
-		addChild(_controlBar);
 
 		// put back on top
-		addChild(_fullscreenButton);
+		//addChild(_fullscreenButton);
 		//_fullscreenButton._alpha = 0;
 		//_fullscreenButton._visible = true;
 
@@ -213,8 +208,8 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 		positionControls(false);
 		
 		// Fire this once just to set the width on some dynamically sized scrub bar items;
-		_scrubBar.scaleX=0;
-		_scrubLoaded.scaleX=0;
+		_scrubBar._xscale=0;
+		_scrubLoaded._xscale=0;
 		
 		setUpExternalInterfaceCallbacks();
 
@@ -229,17 +224,48 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 			_mediaElement.play();
 		}
 
-
-		stage.addEventListener(Event.RESIZE, resizeHandler);
-		stage.addEventListener(MouseEvent.MOUSE_DOWN, stageClicked);
-		stage.addEventListener(FullScreenEvent.FULL_SCREEN, stageFullScreenChanged);	
+		var myListener:Object = new Object();
+		myListener.onResize = function () {
+			resizeHandler();
+		}
+		myListener.onFullScreen = function () {
+			stageFullScreenChanged();
+		}
+		Stage.addListener(myListener);
+		this.addEventListener("onMouseDown", stageClicked);
 	}
 	function setUpExternalInterfaceCallbacks():Void {
 		if (ExternalInterface.available) { //  && !_alwaysShowControls
 
 			try {
-				if (ExternalInterface.objectID != null && ExternalInterface.objectID.toString() != "") {
-					
+				var GetObjectIdJs:String = "";
+				GetObjectIdJs += "function findFlashNode( callbackName ) {";
+				GetObjectIdJs += "  var i;";
+				GetObjectIdJs += "  for ( i = 0; i < document.embeds.length; i++ ) {";
+				GetObjectIdJs += "	if ( document.embeds[i][callbackName] ) {";
+				GetObjectIdJs += "	  return document.embeds[i].name;";
+				GetObjectIdJs += "	}";
+				GetObjectIdJs += " }";
+				GetObjectIdJs += "}";
+				GetObjectIdJs += "  var objectNodes = document.getElementsByTagName('object');";
+				GetObjectIdJs += "";
+				GetObjectIdJs += "  for( i = 0; i < objectNodes.length; i++ ) { ";
+				GetObjectIdJs += "if ( objectNodes[i][callbackName] ) {";
+				GetObjectIdJs += "	  return objectNodes[i].id;";
+				GetObjectIdJs += "	}";
+				GetObjectIdJs += " }";
+				GetObjectIdJs += "}";
+				var uniquename = "helloWorld" + Math.floor(Math.random() * 1000);
+
+				// add a property with the name by adding a callback
+				ExternalInterface.addCallback(uniquename, this, function( ) { });
+				
+				// run the code that scans the DOM for a node with the name
+				var result:Object = ExternalInterface.call(GetObjectIdJs, uniquename);
+				trace("_externalObjectId - "+result);
+				_externalObjectId = String(result);
+				
+				
 					// add HTML media methods
 					ExternalInterface.addCallback("playMedia", playMedia);
 					ExternalInterface.addCallback("loadMedia", loadMedia);
@@ -258,8 +284,8 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 					ExternalInterface.addCallback("hideFullscreenButton", hideFullscreenButton);
 
 					// fire init method					
-					ExternalInterface.call("mejs.MediaPluginBridge.initPlugin", ExternalInterface.objectID);
-				}
+					ExternalInterface.call("mejs.MediaPluginBridge.initPlugin", _externalObjectId);
+				
 
 			}  catch (error:Error) {
 				
@@ -318,8 +344,8 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 	function scrubMove():Void {
 		var event:Object = {}; //TODO - ADD Mouse handlers correctly
 		if (_hoverTime._visible) {
-			var seekBarPosition:Number =  ((event.localX / _scrubTrack._width) *_mediaElement.duration())*_scrubTrack.scaleX;
-			var hoverPos:Number = (seekBarPosition / _mediaElement.duration()) *_scrubTrack.scaleX;
+			var seekBarPosition:Number =  ((event.localX / _scrubTrack._width) *_mediaElement.duration())*_scrubTrack._xscale;
+			var hoverPos:Number = (seekBarPosition / _mediaElement.duration()) *_scrubTrack._xscale;
 			
 			if (_isFullScreen) {
 				_hoverTime._x=event.target.parent.mouseX;
@@ -343,10 +369,10 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 	
 	function scrubClick():Void {
 		var event:Object = {}; //TODO - ADD Mouse handlers correctly
-		var seekBarPosition:Number =  ((event.localX / _scrubTrack._width) *_mediaElement.duration())*_scrubTrack.scaleX;
+		var seekBarPosition:Number =  ((event.localX / _scrubTrack._width) *_mediaElement.duration())*_scrubTrack._xscale;
 
 		var tmp:Number = (_mediaElement.currentTime()/_mediaElement.duration())*_scrubTrack._width;
-		var canSeekToPosition:Boolean = _scrubLoaded.scaleX > (seekBarPosition / _mediaElement.duration()) *_scrubTrack.scaleX;
+		var canSeekToPosition:Boolean = _scrubLoaded._xscale > (seekBarPosition / _mediaElement.duration()) *_scrubTrack._xscale;
 		
 		if (seekBarPosition>0 && seekBarPosition<_mediaElement.duration() && canSeekToPosition) {
 				_mediaElement.setCurrentTime(seekBarPosition);
@@ -382,17 +408,17 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 			_hoverTime._x=0;
 			_controlBarBg._width = 300;
 			_controlBarBg._height = 93;
-			//_controlBarBg._x = (stage.stageWidth/2) - (_controlBarBg._width/2);
-			//_controlBarBg._y  = stage.stageHeight - 300;
+			//_controlBarBg._x = (Stage.width/2) - (_controlBarBg._width/2);
+			//_controlBarBg._y  = Stage.height - 300;
 			
-			_pauseButton.scaleX = _playButton.scaleX=3.5;
-			_pauseButton.scaleY= _playButton.scaleY=3.5;
+			_pauseButton._xscale = _playButton._xscale=3.5;
+			_pauseButton._yscale= _playButton._yscale=3.5;
 			// center the play button and make it big and at the top
 			_pauseButton._x = _playButton._x = (_controlBarBg._width/2)-(_playButton._width/2)+7;
 			_pauseButton._y = _playButton._y = _controlBarBg._height-_playButton._height-(14)
 							
-			_controlBar._x = (stage.stageWidth/2) -150;
-			_controlBar._y = stage.stageHeight - _controlBar._height-100;
+			_controlBar._x = (Stage.width/2) -150;
+			_controlBar._y = Stage.height - _controlBar._height-100;
 			
 			
 			// reposition the time and duration items
@@ -419,21 +445,21 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 
 			_hoverTime._y=(_hoverTime._height/2)+1;
 			_hoverTime._x=0;
-			_controlBarBg._width = stage.stageWidth;
+			_controlBarBg._width = Stage.width;
 			_controlBarBg._height = 30;
 			_controlBarBg._y=0;
 			_controlBarBg._x=0;
 			// _controlBarBg._x = 0;
-			// _controlBarBg._y  = stage.stageHeight - _controlBar._height;
+			// _controlBarBg._y  = Stage.height - _controlBar._height;
 			
-			_pauseButton.scaleX = _playButton.scaleX=1;
-			_pauseButton.scaleY = _playButton.scaleY=1;
+			_pauseButton._xscale = _playButton._xscale=1;
+			_pauseButton._yscale = _playButton._yscale=1;
 			
 			_pauseButton._x = _playButton._x = 7;
 			_pauseButton._y = _playButton._y = _controlBarBg._height-_playButton._height-2;
 			
 			
-			//_currentTime._x = stage.stageWidth - _duration._width - 10 - _currentTime._width - 10;
+			//_currentTime._x = Stage.width - _duration._width - 10 - _currentTime._width - 10;
 			_currentTime._x = _playButton._x+_playButton._width;
 			
 			_fullscreenIcon._x = _controlBarBg._width - _fullscreenIcon._width - 7;
@@ -450,7 +476,7 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 			
 			_scrubBar._width =  _scrubOverlay._width = _scrubTrack._width =  (_duration._x-_duration._width-10)-_duration._width+5;
 			_controlBar._x = 0;
-			_controlBar._y = stage.stageHeight - _controlBar._height;
+			_controlBar._y = Stage.height - _controlBar._height;
 			
 		}
 		
@@ -594,8 +620,8 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 		}
 		
 		// check for oversizing
-		if ((_fullscreenButton._x + _fullscreenButton._width) > stage.stageWidth)
-			_fullscreenButton._x = stage.stageWidth - _fullscreenButton._width;
+		if ((_fullscreenButton._x + _fullscreenButton._width) > Stage.width)
+			_fullscreenButton._x = Stage.width - _fullscreenButton._width;
 		
 		// show it!
 		if (visibleAndAbove) {
@@ -697,16 +723,15 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 		//_currentTime.text = (_mediaElement.currentTime()*1).toString(); 
 		_currentTime.text =  secondsToTimeCode(_mediaElement.currentTime());
 
-		var pct:Number =  (_mediaElement.currentTime() / _mediaElement.duration()) *_scrubTrack.scaleX;
+		var pct:Number =  (_mediaElement.currentTime() / _mediaElement.duration()) *_scrubTrack._xscale;
 		
-		_scrubBar.scaleX = pct;
-		_scrubLoaded.scaleX = (_mediaElement.currentProgress()*_scrubTrack.scaleX)/100;
+		_scrubBar._xscale = pct;
+		_scrubLoaded._xscale = (_mediaElement.currentProgress()*_scrubTrack._xscale)/100;
 		
 		//trace((_mediaElement.duration()*1).toString() + " / " + (_mediaElement.currentTime()*1).toString());
 		//trace("CurrentProgress:"+_mediaElement.currentProgress());
 		
-		if (ExternalInterface.objectID != null && ExternalInterface.objectID.toString() != "") {
-
+		
 			if (eventValues == null)
 				eventValues == "";
 
@@ -715,9 +740,9 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 			}
 
 			eventValues = "{" + eventValues + "}";
-
-			ExternalInterface.call("setTimeout", "mejs.MediaPluginBridge.fireEvent('" + ExternalInterface.objectID + "','" + eventName + "'," + eventValues + ")",0);
-		}
+			if(ExternalInterface.available) {
+				ExternalInterface.call("setTimeout", "mejs.MediaPluginBridge.fireEvent('" + _externalObjectId + "','" + eventName + "'," + eventValues + ")",0);
+			}
 	}
 	 function getExtenstion(mediaUrl:String):String {
 		if(!mediaUrl)

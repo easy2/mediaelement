@@ -1,4 +1,4 @@
-﻿class HtmlMediaEventAS2 {
+﻿class htmlElementsAS2.HtmlMediaEventAS2 {
 	public static var LOADED_DATA:String = "loadeddata";
 	public static var PROGRESS:String = "progress";
 	public static var TIMEUPDATE:String = "timeupdate";
