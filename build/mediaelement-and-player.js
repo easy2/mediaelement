@@ -773,6 +773,8 @@ mejs.MediaElementDefaults = {
 	pluginPath: mejs.Utility.getScriptPath(['mediaelement.js','mediaelement.min.js','mediaelement-and-player.js','mediaelement-and-player.min.js']),
 	// name of flash file
 	flashName: 'flashmediaelement.swf',
+	// name of flash file
+	flashNameAS2: 'flashmediaelementAS2.swf',
 	// turns on the smoothing filter in Flash
 	enablePluginSmoothing: false,
 	// name of silverlight file
@@ -1025,8 +1027,9 @@ mejs.HtmlMediaElementShim = {
 	
 	getTypeFromFile: function(url) {
 		var ext = url.substring(url.lastIndexOf('.') + 1);
-		if(ext && ext.toLowerCase() == "swf") 
+		if(ext && ext.toLowerCase() == "swf") {
 			return 'application/x-shockwave-flash';
+		}
 		return (/(mp4|m4v|ogg|ogv|webm|flv|wmv|mpeg|mov)/gi.test(ext) ? 'video' : 'audio') + '/' + ext;
 	},
 
@@ -1159,38 +1162,38 @@ mejs.HtmlMediaElementShim = {
 					break;
 
 			case 'flash':
-
+				
+				var flashSwfToEmbed = this.getCorrectFlashSwfPlayer(playback.url, options);
+				
 				if (mejs.MediaFeatures.isIE) {
 					specialIEContainer = document.createElement('div');
 					container.appendChild(specialIEContainer);
 					specialIEContainer.outerHTML =
-'<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="//download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab" ' +
-'id="' + pluginid + '" width="' + width + '" height="' + height + '">' +
-'<param name="movie" value="' + options.pluginPath + options.flashName + '?x=' + (new Date()) + '" />' +
-'<param name="flashvars" value="' + initVars.join('&amp;') + '" />' +
-'<param name="quality" value="high" />' +
-'<param name="bgcolor" value="#000000" />' +
-'<param name="wmode" value="transparent" />' +
-'<param name="allowScriptAccess" value="always" />' +
-'<param name="allowFullScreen" value="true" />' +
-'</object>';
-
+					'<object classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" codebase="//download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab" ' +
+					'id="' + pluginid + '" width="' + width + '" height="' + height + '">' +
+					'<param name="movie" value="' + options.pluginPath + flashSwfToEmbed + '?x=' + (new Date()) + '" />' +
+					'<param name="flashvars" value="' + initVars.join('&amp;') + '" />' +
+					'<param name="quality" value="high" />' +
+					'<param name="bgcolor" value="#000000" />' +
+					'<param name="wmode" value="transparent" />' +
+					'<param name="allowScriptAccess" value="always" />' +
+					'<param name="allowFullScreen" value="true" />' +
+					'</object>';
 				} else {
-
 					container.innerHTML =
-'<embed id="' + pluginid + '" name="' + pluginid + '" ' +
-'play="true" ' +
-'loop="false" ' +
-'quality="high" ' +
-'bgcolor="#000000" ' +
-'wmode="transparent" ' +
-'allowScriptAccess="always" ' +
-'allowFullScreen="true" ' +
-'type="application/x-shockwave-flash" pluginspage="//www.macromedia.com/go/getflashplayer" ' +
-'src="' + options.pluginPath + options.flashName + '" ' +
-'flashvars="' + initVars.join('&') + '" ' +
-'width="' + width + '" ' +
-'height="' + height + '"></embed>';
+					'<embed id="' + pluginid + '" name="' + pluginid + '" ' +
+					'play="true" ' +
+					'loop="false" ' +
+					'quality="high" ' +
+					'bgcolor="#000000" ' +
+					'wmode="transparent" ' +
+					'allowScriptAccess="always" ' +
+					'allowFullScreen="true" ' +
+					'type="application/x-shockwave-flash" pluginspage="//www.macromedia.com/go/getflashplayer" ' +
+					'src="' + options.pluginPath + flashSwfToEmbed + '" ' +
+					'flashvars="' + initVars.join('&') + '" ' +
+					'width="' + width + '" ' +
+					'height="' + height + '"></embed>';
 				}
 				break;
 			
@@ -1285,6 +1288,22 @@ mejs.HtmlMediaElementShim = {
 		options.success(htmlMediaElement, htmlMediaElement);
 		
 		return htmlMediaElement;
+	},
+	getCorrectFlashSwfPlayer : function(mediaUrl, options) {
+		var arrParts = mediaUrl.split(".");
+		var ext = arrParts[arrParts.length - 1];
+		var flashSwfToEmbed = options.flashName;
+		
+		if(ext.toLowerCase() == "swf") {
+			flashSwfToEmbed = options.flashNameAS2;
+			if(arrParts.length > 2) {
+				var secondaryExt = arrParts[arrParts.length - 2 ];
+				if(secondaryExt.toLowerCase() == "as3") {
+					flashSwfToEmbed = options.flashName;
+				}
+			}
+		}
+		return flashSwfToEmbed;
 	}
 };
 
