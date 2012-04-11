@@ -1,5 +1,7 @@
 ﻿stop();
+import HtmlMediaEventAS2;
 import htmlElements.SwfElementAS2;
+import flash.geom.ColorTransform;
 
 MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 	return this[mcName];
@@ -94,8 +96,8 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 		// setup stage and player sizes/scales
 		Stage.align = "TL";
 		Stage.scaleMode = "noScale";
-		_stageWidth = Stage._width;
-		_stageHeight = Stage._height;
+		_stageWidth = Stage.width;
+		_stageHeight = Stage.height;
 
 		//_autoplay = true;
 		//_mediaUrl  = "http://mediafiles.dts.edu/chapel/mp4/20100609.mp4";
@@ -208,7 +210,7 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 			_mediaElement.setSrc(_mediaUrl);
 		}
 
-		positionControls();
+		positionControls(false);
 		
 		// Fire this once just to set the width on some dynamically sized scrub bar items;
 		_scrubBar.scaleX=0;
@@ -270,7 +272,7 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 	function mouseActivityMove():Void {
 		
 		// if mouse is in the video area
-		if (_autoHide && (_root._xmouse >=0 && _root._xmouse <= Stage.stageWidth) && (_root._ymouse>=0 && _root._ymouse <= Stage.stageHeight)) {
+		if (_autoHide && (_root._xmouse >=0 && _root._xmouse <= Stage.width) && (_root._ymouse>=0 && _root._ymouse <= Stage.height)) {
 
 			// This could be move to a nice fade at some point...
 			_controlBar._visible = (_alwaysShowControls || _isFullScreen);
@@ -373,9 +375,7 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 		}
 	}
 	
-	function positionControls(forced:Boolean=false) {
-		
-		
+	function positionControls(forced:Boolean) {
 		if ( _controlStyle.toUpperCase() == "FLOATING" && _isFullScreen) {
 
 			_hoverTime._y=(_hoverTime._height/2)+1;
@@ -458,23 +458,15 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 	
 	// END: Controls
 	
-
-	function stageClicked(e:MouseEvent):Void {
-		//_output.appendText("click: " + e.stageX.toString() +","+e.stageY.toString() + "\n");
+	function stageClicked():Void {
 		sendEvent("click", "");
 	}
-
-	function resizeHandler(e:Event):Void {
-		//_video.scaleX = stage.stageWidth / _stageWidth;
-		//_video.scaleY = stage.stageHeight / _stageHeight;
-		//positionControls();
-		
-		repositionVideo();
+	function resizeHandler():Void {
+		repositionVideo(false);
 	}
-
 	// START: Fullscreen		
 	function enterFullscreen() {
-		var screenRectangle:Rectangle = new Rectangle(_video._x, _video._y, flash.system.Capabilities.screenResolutionX, flash.system.Capabilities.screenResolutionY); 
+		var screenRectangle:Object = {x:_video._x, y:_video._y, width:System.capabilities.screenResolutionX, height:System.capabilities.screenResolutionY}; 
 		stage.fullScreenSourceRect = screenRectangle;
 		
 		Stage.displayState = "fullScreen";
@@ -519,7 +511,7 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 	}
 	
 	// control bar button/icon 
-	function fullScreenIconClick(e:MouseEvent) {
+	function fullScreenIconClick() {
 		try {
 			_controlBar._visible = true;
 			setFullscreen(!_isFullScreen);
@@ -529,7 +521,7 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 	}
 
 	// special floating fullscreen icon
-	function fullscreenClick(e:MouseEvent) {
+	function fullscreenClick() {
 		//_fullscreenButton._visible = false;
 		_fullscreenButton._alpha = 0
 
@@ -537,18 +529,18 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 			_controlBar._visible = true;
 			setFullscreen(true);
 			repositionVideo(true);
-			positionControls();
+			positionControls(false);
 		} catch (error:Error) {
 		}
 	}
 	
 	
-	function stageFullScreenChanged(e:FullScreenEvent) {
+	function stageFullScreenChanged() {
 		//_fullscreenButton._visible = false;
 		_fullscreenButton._alpha = 0;
-		_isFullScreen = e.fullScreen;
+		_isFullScreen = (Stage.displayState != "normal");
 		
-		sendEvent(HtmlMediaEvent.FULLSCREENCHANGE, "isFullScreen:" + e.fullScreen );
+		sendEvent(HtmlMediaEventAS2.FULLSCREENCHANGE, "isFullScreen:" + _isFullScreen );
 
 		if (!e.fullScreen) {
 			_controlBar._visible = _alwaysShowControls;
@@ -588,8 +580,8 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 		_stageHeight = height;
 
 		if (_video != null) {
-			repositionVideo();
-			positionControls();
+			repositionVideo(false);
+			positionControls(false);
 		}
 	}
 	function positionFullscreenButton(x:Number, y:Number, visibleAndAbove:Boolean ) {
@@ -616,7 +608,7 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 	
 	// END: external interface
 	
-	function repositionVideo(fullscreen:Boolean = false):Void {
+	function repositionVideo(fullscreen:Boolean):Void {
 
 		if (_nativeVideoWidth <= 0 || _nativeVideoHeight <= 0) {
 			//_mediaElement.play();
@@ -630,21 +622,21 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 		_video._y = 0;			
 		
 		if(fullscreen == true) {
-			stageRatio = flash.system.Capabilities.screenResolutionX/flash.system.Capabilities.screenResolutionY;
+			stageRatio = System.capabilities.screenResolutionX/System.capabilities.screenResolutionY;
 			nativeRatio = _nativeVideoWidth/_nativeVideoHeight;
 
 			// adjust size and position
 			if (nativeRatio > stageRatio) {
-				_video._width = flash.system.Capabilities.screenResolutionX;
-				_video._height = _nativeVideoHeight * flash.system.Capabilities.screenResolutionX / _nativeVideoWidth;
-				_video._y = flash.system.Capabilities.screenResolutionY/2 - _video._height/2;
+				_video._width = System.capabilities.screenResolutionX;
+				_video._height = _nativeVideoHeight * System.capabilities.screenResolutionX / _nativeVideoWidth;
+				_video._y = System.capabilities.screenResolutionY/2 - _video._height/2;
 			} else if (stageRatio > nativeRatio) {
-				_video._height = flash.system.Capabilities.screenResolutionY;
-				_video._width = _nativeVideoWidth * flash.system.Capabilities.screenResolutionY / _nativeVideoHeight;
-				_video._x = flash.system.Capabilities.screenResolutionX/2 - _video._width/2;
+				_video._height = System.capabilities.screenResolutionY;
+				_video._width = _nativeVideoWidth * System.capabilities.screenResolutionY / _nativeVideoHeight;
+				_video._x = System.capabilities.screenResolutionX/2 - _video._width/2;
 			} else if (stageRatio == nativeRatio) {
-				_video._height = flash.system.Capabilities.screenResolutionY;
-				_video._width = flash.system.Capabilities.screenResolutionX;
+				_video._height = System.capabilities.screenResolutionY;
+				_video._width = System.capabilities.screenResolutionX;
 
 			}
 		} else {
@@ -666,23 +658,23 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 			}
 		}
 
-		positionControls();
+		positionControls(false);
 	}
 
 	// SEND events to JavaScript
 	function sendEvent(eventName:String, eventValues:String) {			
 
 		// special video event
-		if (eventName == HtmlMediaEvent.LOADEDMETADATA && _isVideo) {
+		if (eventName == HtmlMediaEventAS2.LOADEDMETADATA && _isVideo) {
 			//trace("METADATA RECEIVED!");
-			_nativeVideoWidth = (_mediaElement as VideoElement).videoWidth;
-			_nativeVideoHeight = (_mediaElement as VideoElement).videoHeight;
+			_nativeVideoWidth = VideoElement(_mediaElement).videoWidth;
+			_nativeVideoHeight = VideoElement(_mediaElement).videoHeight;
 
 			 if(stage.displayState == "fullScreen" ) {
 				setVideoSize(_nativeVideoWidth, _nativeVideoHeight);
 				repositionVideo(true);
 			 } else {
-				repositionVideo();
+				repositionVideo(false);
 			 }
 		}
 
@@ -748,7 +740,7 @@ MovieClip.prototype.getChildByName = function(mcName):MovieClip {
 	function applyColor(item:Object, color:String):Void {
 		
 		var myColor:ColorTransform = item.transform.colorTransform;
-		myColor.color = Number(color);
+		myColor.rgb = Number(color);
 		item.transform.colorTransform = myColor;
 	}
 	// END: utility 
