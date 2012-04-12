@@ -11,7 +11,6 @@ mejs.MediaPluginBridge = {
 
 	// when Flash/Silverlight is ready, it calls out to this method
 	initPlugin: function (id) {
-
 		var pluginMediaElement = this.pluginMediaElements[id],
 			htmlMediaElement = this.htmlMediaElements[id];
 

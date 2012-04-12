@@ -64,8 +64,7 @@
 	 function initFlashMediaElement():Void {
 
 		// show allow this player to be called from a different domain than the HTML page hosting the player
-		Security.allowDomain("*");
-		trace("initFlashMediaElement");
+		System.security.allowDomain("*");
 		// get parameters
 		var params:Object = _root;
 		_mediaUrl = (params['file'] != undefined) ? String(params['file']) : "";
@@ -102,6 +101,7 @@
 
 		//_mediaUrl = "http://video.ted.com/talks/podcast/AlGore_2006_480.mp4";
 		//_mediaUrl = "rtmp://stream2.france24._yacast.net/france24_live/en/f24_liveen";
+		_mediaUrl = "/cm_mvc/scripts/mediaelementjs/testSWF.swf";
 
 		
 
@@ -109,14 +109,13 @@
 		_fullscreenButton = getChildByName("fullscreen_btn");
 		//_fullscreenButton._visible = false;
 		_fullscreenButton._alpha = 0;
-		_fullscreenButton.addEventListener("onPress", fullscreenClick, false);
+		_fullscreenButton.addEventListener("onPress", fullscreenClick, this);
 		_fullscreenButton._x = Stage.width - _fullscreenButton._width;
 		_fullscreenButton._y = Stage.height - _fullscreenButton._height;
 		
 		// create media element
 		if(_isSwf) {
 			var holder:MovieClip = this.createEmptyMovieClip("swfPlayerHolder", this.getNextHighestDepth());
-			trace(" new SwfElementAS2");
 			_mediaElement = new SwfElementAS2(this, _autoplay, _preload, _timerRate, _startVolume, holder);
 		} 
 
@@ -136,26 +135,22 @@
 		applyColor(_scrubLoaded, _scrubLoadedColor);
 		
 		_fullscreenIcon = _controlBar.getChildByName("fullscreenIcon");
-		
-		// New fullscreenIcon for new fullscreen floating controls
-		//if(_alwaysShowControls && _controlStyle.toUpperCase()=="FLOATING") {
-			_fullscreenIcon.addEventListener("onPress", fullScreenIconClick);
-		//}
+		_fullscreenIcon.addEventListener("onPress", fullScreenIconClick, this);
 		
 		_volumeMuted = _controlBar.getChildByName("muted_mc");
 		_volumeUnMuted = _controlBar.getChildByName("unmuted_mc");
 		
-		_volumeMuted.addEventListener("onPress", toggleVolume);
-		_volumeUnMuted.addEventListener("onPress",  toggleVolume);
+		_volumeMuted.addEventListener("onPress", toggleVolume, this);
+		_volumeUnMuted.addEventListener("onPress",  toggleVolume, this);
 		
 		_playButton = _controlBar.getChildByName("play_btn");
 		_playButton.addEventListener("onPress", function() {
 			_mediaElement.play();					 
-		});
+		}, this);
 		_pauseButton = _controlBar.getChildByName("pause_btn");
 		_pauseButton.addEventListener("onPress", function() {
 			_mediaElement.pause();					 
-		});
+		}, this);
 		_pauseButton._visible = false;
 		_duration = _controlBar.getChildByName("duration_txt");
 		_currentTime = _controlBar.getChildByName("currentTime_txt");
@@ -168,15 +163,15 @@
 
 		
 		// Add new timeline scrubber events
-		_scrubOverlay.addEventListener("onMouseMove", scrubMove);
-		_scrubOverlay.addEventListener("onPress", scrubClick);
-		_scrubOverlay.addEventListener("onRollOver", scrubOver);
-		_scrubOverlay.addEventListener("onRollOut", scrubOut);
+		_scrubOverlay.addEventListener("onMouseMove", scrubMove, this);
+		_scrubOverlay.addEventListener("onPress", scrubClick, this);
+		_scrubOverlay.addEventListener("onRollOver", scrubOver, this);
+		_scrubOverlay.addEventListener("onRollOut", scrubOut, this);
 		
 		if (_autoHide) { // && _alwaysShowControls) {
 			// Add mouse activity for show/hide of controls
 			//Stage.addEventListener(Event.MOUSE_LEAVE, mouseActivityLeave);
-			this.addEventListener("onMouseDown", mouseActivityMove);
+			this.addEventListener("onMouseDown", mouseActivityMove, this);
 			_inactiveTime = 2500;
 			_autoHideTimer = setTimeout(function():Void {
 					idleTimer();
@@ -232,64 +227,57 @@
 			stageFullScreenChanged();
 		}
 		Stage.addListener(myListener);
-		this.addEventListener("onMouseDown", stageClicked);
+		this.addEventListener("onMouseDown", stageClicked, this);
 	}
 	function setUpExternalInterfaceCallbacks():Void {
 		if (ExternalInterface.available) { //  && !_alwaysShowControls
 
 			try {
+				var uniquename = "cb_" + new Date().getMilliseconds()+"_"+Math.round(Math.random() * 100000);
 				var GetObjectIdJs:String = "";
-				GetObjectIdJs += "function findFlashNode( callbackName ) {";
+				GetObjectIdJs += "function() {";
+				GetObjectIdJs += "  var callbackName = '" + uniquename + "';";
 				GetObjectIdJs += "  var i;";
 				GetObjectIdJs += "  for ( i = 0; i < document.embeds.length; i++ ) {";
-				GetObjectIdJs += "	if ( document.embeds[i][callbackName] ) {";
-				GetObjectIdJs += "	  return document.embeds[i].name;";
-				GetObjectIdJs += "	}";
-				GetObjectIdJs += " }";
-				GetObjectIdJs += "}";
+				GetObjectIdJs += "	  if ( document.embeds[i][callbackName] ) {  return document.embeds[i].name; }";
+				GetObjectIdJs += "  }";
 				GetObjectIdJs += "  var objectNodes = document.getElementsByTagName('object');";
-				GetObjectIdJs += "";
-				GetObjectIdJs += "  for( i = 0; i < objectNodes.length; i++ ) { ";
-				GetObjectIdJs += "if ( objectNodes[i][callbackName] ) {";
-				GetObjectIdJs += "	  return objectNodes[i].id;";
-				GetObjectIdJs += "	}";
-				GetObjectIdJs += " }";
+				GetObjectIdJs += "  for( i = 0; i < objectNodes.length; i++ ) { ";;
+				GetObjectIdJs += "    if (objectNodes[i][callbackName]) {  return objectNodes[i].id; } ";
+				GetObjectIdJs += "  }";
 				GetObjectIdJs += "}";
-				var uniquename = "helloWorld" + Math.floor(Math.random() * 1000);
+				
 
 				// add a property with the name by adding a callback
-				ExternalInterface.addCallback(uniquename, this, function( ) { });
+				var addedCall:Boolean = ExternalInterface.addCallback(uniquename, this, function( ) { });
 				
 				// run the code that scans the DOM for a node with the name
-				var result:Object = ExternalInterface.call(GetObjectIdJs, uniquename);
-				trace("_externalObjectId - "+result);
+				var result:Object = ExternalInterface.call(GetObjectIdJs);
 				_externalObjectId = String(result);
 				
 				
 					// add HTML media methods
-					ExternalInterface.addCallback("playMedia", playMedia);
-					ExternalInterface.addCallback("loadMedia", loadMedia);
-					ExternalInterface.addCallback("pauseMedia", pauseMedia);
-					ExternalInterface.addCallback("stopMedia", stopMedia);
+					ExternalInterface.addCallback("playMedia", this, playMedia);
+					ExternalInterface.addCallback("loadMedia", this, loadMedia);
+					ExternalInterface.addCallback("pauseMedia", this, pauseMedia);
+					ExternalInterface.addCallback("stopMedia", this, stopMedia);
 
-					ExternalInterface.addCallback("setSrc", setSrc);
-					ExternalInterface.addCallback("setCurrentTime", setCurrentTime);
-					ExternalInterface.addCallback("setVolume", setVolume);
-					ExternalInterface.addCallback("setMuted", setMuted);
+					ExternalInterface.addCallback("setSrc", this, setSrc);
+					ExternalInterface.addCallback("setCurrentTime", this, setCurrentTime);
+					ExternalInterface.addCallback("setVolume", this, setVolume);
+					ExternalInterface.addCallback("setMuted", this,setMuted);
 
-					ExternalInterface.addCallback("setFullscreen", setFullscreen);
-					ExternalInterface.addCallback("setVideoSize", setVideoSize);
+					ExternalInterface.addCallback("setFullscreen",this, setFullscreen);
+					ExternalInterface.addCallback("setVideoSize", this,setVideoSize);
 					
-					ExternalInterface.addCallback("positionFullscreenButton", positionFullscreenButton);
-					ExternalInterface.addCallback("hideFullscreenButton", hideFullscreenButton);
+					ExternalInterface.addCallback("positionFullscreenButton", this,positionFullscreenButton);
+					ExternalInterface.addCallback("hideFullscreenButton", this,hideFullscreenButton);
 
 					// fire init method					
-					ExternalInterface.call("mejs.MediaPluginBridge.initPlugin", _externalObjectId);
+					ExternalInterface.call("function() { mejs.MediaPluginBridge.initPlugin('"+_externalObjectId+"'); }");
 				
 
-			}  catch (error:Error) {
-				
-			}
+			}  catch (error:Error) { trace(error);}
 
 		}
 	}
@@ -402,6 +390,7 @@
 	}
 	
 	function positionControls(forced:Boolean) {
+		
 		if ( _controlStyle.toUpperCase() == "FLOATING" && _isFullScreen) {
 
 			_hoverTime._y=(_hoverTime._height/2)+1;
@@ -492,9 +481,6 @@
 	}
 	// START: Fullscreen		
 	function enterFullscreen() {
-		var screenRectangle:Object = {x:_video._x, y:_video._y, width:System.capabilities.screenResolutionX, height:System.capabilities.screenResolutionY}; 
-		stage.fullScreenSourceRect = screenRectangle;
-		
 		Stage.displayState = "fullScreen";
 		
 		repositionVideo(true);
@@ -505,9 +491,7 @@
 	}
 	
 	function exitFullscreen() {
-	
 		Stage.displayState = "normal";
-			
 		
 		_controlBar._visible = false;
 		
@@ -604,11 +588,6 @@
 	function setVideoSize(width:Number, height:Number) {
 		_stageWidth = width;
 		_stageHeight = height;
-
-		if (_video != null) {
-			repositionVideo(false);
-			positionControls(false);
-		}
 	}
 	function positionFullscreenButton(x:Number, y:Number, visibleAndAbove:Boolean ) {
 		if (visibleAndAbove) {
@@ -635,55 +614,6 @@
 	// END: external interface
 	
 	function repositionVideo(fullscreen:Boolean):Void {
-
-		if (_nativeVideoWidth <= 0 || _nativeVideoHeight <= 0) {
-			//_mediaElement.play();
-			return;
-		}
-
-		// calculate ratios
-		var stageRatio, nativeRatio;
-		
-		_video._x = 0;
-		_video._y = 0;			
-		
-		if(fullscreen == true) {
-			stageRatio = System.capabilities.screenResolutionX/System.capabilities.screenResolutionY;
-			nativeRatio = _nativeVideoWidth/_nativeVideoHeight;
-
-			// adjust size and position
-			if (nativeRatio > stageRatio) {
-				_video._width = System.capabilities.screenResolutionX;
-				_video._height = _nativeVideoHeight * System.capabilities.screenResolutionX / _nativeVideoWidth;
-				_video._y = System.capabilities.screenResolutionY/2 - _video._height/2;
-			} else if (stageRatio > nativeRatio) {
-				_video._height = System.capabilities.screenResolutionY;
-				_video._width = _nativeVideoWidth * System.capabilities.screenResolutionY / _nativeVideoHeight;
-				_video._x = System.capabilities.screenResolutionX/2 - _video._width/2;
-			} else if (stageRatio == nativeRatio) {
-				_video._height = System.capabilities.screenResolutionY;
-				_video._width = System.capabilities.screenResolutionX;
-
-			}
-		} else {
-			stageRatio = _stageWidth/_stageHeight;
-			nativeRatio = _nativeVideoWidth/_nativeVideoHeight;
-
-			// adjust size and position
-			if (nativeRatio > stageRatio) {
-				_video._width = _stageWidth;
-				_video._height = _nativeVideoHeight * _stageWidth / _nativeVideoWidth;
-				_video._y = _stageHeight/2 - _video._height/2;
-			} else if (stageRatio > nativeRatio) {
-				_video._height = _stageHeight;
-				_video._width = _nativeVideoWidth * _stageHeight / _nativeVideoHeight;
-				_video._x = _stageWidth/2 - _video._width/2;
-			} else if (stageRatio == nativeRatio) {
-				_video._height = _stageHeight;
-				_video._width = _stageWidth;
-			}
-		}
-
 		positionControls(false);
 	}
 

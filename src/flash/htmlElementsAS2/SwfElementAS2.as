@@ -21,20 +21,16 @@ class htmlElementsAS2.SwfElementAS2{
 
 		private var _element:MovieClip;
 		private var _firedCanPlay:Boolean = false;
-		private var _playAfterLoading:Boolean= false;
+		private var _playAfterLoading:Boolean= true;
 		
 		private var _swfContent:MovieClip;
-		private var _swfWidth:Number;
-		private var _swfHeight:Number;
 		private var _swfCurrentFrame:Number = 1;
 		private var _swfTotalFrames:Number;
 		private var _shouldCenter:Boolean = true;
 		
-		private var _frameRate:Number = 60;
+		private var _frameRate:Number = 30;
 		
 		private var _holder:MovieClip;
-		private var _swfHolder:MovieClip;
-
 		
 		public function duration():Number {
 			return _duration;
@@ -56,61 +52,50 @@ class htmlElementsAS2.SwfElementAS2{
 			_preload = preload;
 
 			_sound = new Sound();
-			_sound.setVolume(startVolume);
+			setVolume(_volume);
+
 			_holder = holder;
-			_swfHolder = _holder.createEmptyMovieClip("swfHolder", _holder.getNextHighestDepth());
 		}
 		
 		// events
-		public function onLoadProgress (mc:MovieClip):Void {
-			_bytesLoaded = mc.getBytesLoaded();
-			_bytesTotal = mc.getBytesTotal();
-			trace("onLoadProgress = "+_bytesLoaded+" of "+_bytesTotal);
+		public function onLoadProgress (mc:MovieClip, loadedBytes:Number, totalBytes:Number):Void {
+			_bytesLoaded = loadedBytes;
+			_bytesTotal = totalBytes;
 			sendEvent(HtmlMediaEventAS2.PROGRESS);
 		}
 		public function onLoadError ():Void {
 			//do nothing, load has failed!
 		}
 		public function onLoadInit(mc:MovieClip):Void {
-			trace("onLoadInit = "+_bytesLoaded+" of "+_bytesTotal);
+			
 			_isLoaded = true;
 			_swfContent = mc;
-			//read form loader info to get file width and height, not the total width (which includes animating from off stage)
-			_swfWidth = _swfContent._width;
-			_swfHeight = _swfContent._height;
+			
 			
 			_swfTotalFrames = _swfContent._totalFrames; 
-
+			
 			if(_swfContent) {
 				_swfContent.gotoAndStop(1);
-				_swfContent.addEventListener("onEnterFrame", handleFrameEnter);
+				_swfContent.addEventListener("onEnterFrame", handleFrameEnter, this);
 				
-				centerMedia(_swfContent);
 				_duration =  _swfTotalFrames/_frameRate;
 				
 				sendEvent(HtmlMediaEventAS2.LOADEDDATA);
 				sendEvent(HtmlMediaEventAS2.CANPLAY);
 				_firedCanPlay = true;
-				
-				if (_playAfterLoading) {
-					_playAfterLoading = false;
-					play();
+				if (_playAfterLoading == true) {
+					_isPaused = false;
+					_swfContent.gotoAndPlay(_swfCurrentFrame);
+					didStartPlaying();
 				}	
 			} else {
 				onLoadError();
 			}
 		}
 		
-		private function centerMedia(obj:MovieClip):Void {
-			if(_shouldCenter) {
-				 obj.x = Math.max(0, (Stage.width - _swfWidth)/2);
-				 obj.y = Math.max(0, (Stage.height - _swfHeight)/2);
-			}
-		}
-		
 		private function handleFrameEnter():Void {
-			_swfCurrentFrame = _swfContent.currentFrame;
-			_currentTime =_swfCurrentFrame / 60;
+			_swfCurrentFrame = _swfContent._currentframe;
+			_currentTime =_swfCurrentFrame / _frameRate;
 			if(!_isPaused) {
 				sendEvent(HtmlMediaEventAS2.TIMEUPDATE);
 				if(_swfCurrentFrame >= _swfTotalFrames) {
@@ -139,17 +124,17 @@ class htmlElementsAS2.SwfElementAS2{
 			
 			var swfLoader:MovieClipLoader = new MovieClipLoader();
 			swfLoader.addListener(this);
-			swfLoader.loadClip(_currentUrl, _swfHolder);
+			swfLoader.loadClip(_currentUrl, _holder);
 			
 			sendEvent(HtmlMediaEventAS2.LOADSTART);
 		}
 
 		public function play():Void {
 			if (!_isLoaded) {
-				_playAfterLoading = true;
 				load();
 				return;
 			}
+			
 			_isPaused = false;
 			_swfContent.gotoAndPlay(_swfCurrentFrame);
 			didStartPlaying();
@@ -169,7 +154,7 @@ class htmlElementsAS2.SwfElementAS2{
 
 		public function setCurrentTime(pos:Number):Void {
 			_currentTime = pos;
-			_swfCurrentFrame = (_swfContent.stage != null) ? Math.round(_swfContent.stage.frameRate * _currentTime) : 1;
+			_swfCurrentFrame = Math.round(_frameRate * _currentTime);
 			_swfCurrentFrame = Math.max(Math.min(_swfCurrentFrame, _swfTotalFrames), 1);
 			_swfContent.gotoAndPlay(_swfCurrentFrame);
 			_isPaused = false;
@@ -191,7 +176,7 @@ class htmlElementsAS2.SwfElementAS2{
 		public function setVolume(volume:Number):Void {
 			_volume = volume;
 
-			_sound.setVolume(_volume);
+			_sound.setVolume(_volume * 100);
 			_isMuted = (_volume == 0);
 
 			sendEvent(HtmlMediaEventAS2.VOLUMECHANGE);
@@ -212,7 +197,7 @@ class htmlElementsAS2.SwfElementAS2{
 				return;
 
 			if (muted) {
-				_preMuteVolume = _sound.getVolume();
+				_preMuteVolume = _sound.getVolume()/100;
 				setVolume(0);
 			} else {
 				setVolume(_preMuteVolume);
