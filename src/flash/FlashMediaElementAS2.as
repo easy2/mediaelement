@@ -101,7 +101,7 @@
 
 		//_mediaUrl = "http://video.ted.com/talks/podcast/AlGore_2006_480.mp4";
 		//_mediaUrl = "rtmp://stream2.france24._yacast.net/france24_live/en/f24_liveen";
-		_mediaUrl = "/cm_mvc/scripts/mediaelementjs/testSWF.swf";
+		//_mediaUrl = "/cm_mvc/scripts/mediaelementjs/testSWF.swf";
 
 		
 
@@ -254,8 +254,8 @@
 				// run the code that scans the DOM for a node with the name
 				var result:Object = ExternalInterface.call(GetObjectIdJs);
 				_externalObjectId = String(result);
-				
-				
+				if(_externalObjectId && _externalObjectId != null && _externalObjectId != "") {
+					trace("_externalObjectId = "+_externalObjectId);
 					// add HTML media methods
 					ExternalInterface.addCallback("playMedia", this, playMedia);
 					ExternalInterface.addCallback("loadMedia", this, loadMedia);
@@ -275,6 +275,7 @@
 
 					// fire init method					
 					ExternalInterface.call("function() { mejs.MediaPluginBridge.initPlugin('"+_externalObjectId+"'); }");
+				}
 				
 
 			}  catch (error:Error) { trace(error);}
