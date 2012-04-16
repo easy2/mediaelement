@@ -31,6 +31,7 @@ class htmlElementsAS2.SwfElementAS2{
 		private var _frameRate:Number = 30;
 		
 		private var _holder:MovieClip;
+		private var _that:SwfElementAS2;
 		
 		public function duration():Number {
 			return _duration;
@@ -46,6 +47,7 @@ class htmlElementsAS2.SwfElementAS2{
 
 		public function SwfElementAS2(element:MovieClip, autoplay:Boolean, preload:String, timerRate:Number, startVolume:Number, holder:MovieClip) 
 		{
+			_that = this;
 			_element = element;
 			_autoplay = autoplay;
 			_volume = startVolume;
@@ -76,7 +78,7 @@ class htmlElementsAS2.SwfElementAS2{
 			
 			if(_swfContent) {
 				_swfContent.gotoAndStop(1);
-				_swfContent.addEventListener("onEnterFrame", handleFrameEnter, this);
+				_holder.addEventListener("onEnterFrame", handleFrameEnter, this);
 				
 				_duration =  _swfTotalFrames/_frameRate;
 				
@@ -84,12 +86,10 @@ class htmlElementsAS2.SwfElementAS2{
 				sendEvent(HtmlMediaEventAS2.CANPLAY);
 				_firedCanPlay = true;
 				if (_playAfterLoading == true) {
-					_isPaused = false;
-					_swfContent.gotoAndPlay(_swfCurrentFrame);
-					didStartPlaying();
+					_that.play();
 				}	
 			} else {
-				onLoadError();
+				_that.onLoadError();
 			}
 		}
 		
@@ -123,8 +123,9 @@ class htmlElementsAS2.SwfElementAS2{
 			_swfCurrentFrame = 1;
 			
 			var swfLoader:MovieClipLoader = new MovieClipLoader();
+			swfLoader.checkPolicyFile = true;
 			swfLoader.addListener(this);
-			swfLoader.loadClip(_currentUrl, _holder);
+			swfLoader.loadClip(_currentUrl, _holder.createEmptyMovieClip("loadedSwf", _holder.getNextHighestDepth()));
 			
 			sendEvent(HtmlMediaEventAS2.LOADSTART);
 		}
@@ -134,7 +135,7 @@ class htmlElementsAS2.SwfElementAS2{
 				load();
 				return;
 			}
-			
+			_swfCurrentFrame = Math.max(2, _swfCurrentFrame);
 			_isPaused = false;
 			_swfContent.gotoAndPlay(_swfCurrentFrame);
 			didStartPlaying();
@@ -226,7 +227,8 @@ class htmlElementsAS2.SwfElementAS2{
 
 			_element.sendEvent(eventName, values);
 		}
+		public function toString():String {
+			return "[SwfElementAS2]";
+		}
 
 	}
-
-

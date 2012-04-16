@@ -41,7 +41,9 @@ mejs.MediaPluginBridge = {
 			i,
 			bufferedTime,
 			pluginMediaElement = this.pluginMediaElements[id];
-
+		
+		if(!pluginMediaElement) return;
+		
 		pluginMediaElement.ended = false;
 		pluginMediaElement.paused = true;
 

@@ -44,6 +44,8 @@ if (typeof jQuery != 'undefined') {
 		enableAutosize: true,
 		// forces the hour marker (##:00:00)
 		alwaysShowHours: false,
+		// hides the big play button overlay always
+		hideBigPlay: false,
 
 		// show framecount in timecode (##:00:00:00)
 		showTimecodeFrameCount: false,
@@ -855,7 +857,7 @@ if (typeof jQuery != 'undefined') {
 		buildoverlays: function(player, controls, layers, media) {
 			if (!player.isVideo)
 				return;
-
+			
 			var 
 			loading = 
 				$('<div class="mejs-overlay mejs-layer">'+
@@ -883,6 +885,9 @@ if (typeof jQuery != 'undefined') {
 						media.pause();
 					}
 				});
+			if(player.options.hideBigPlay === true) {
+				bigPlay.remove();
+			}
 			
 			/*
 			if (mejs.MediaFeatures.isiOS || mejs.MediaFeatures.isAndroid) {
