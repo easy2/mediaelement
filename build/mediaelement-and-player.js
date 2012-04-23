@@ -414,6 +414,8 @@ mejs.PluginMediaElement = function (pluginid, pluginType, mediaUrl) {
 	this.pluginType = pluginType;
 	this.src = mediaUrl;
 	this.events = {};
+	
+	console.log("mejs.PluginMediaElement "+pluginid+" "+pluginType);
 };
 
 // JavaScript values and ExternalInterface methods that match HTML5 video properties methods
@@ -1880,7 +1882,13 @@ if (typeof jQuery != 'undefined') {
 			
 
 			// create MediaElement shim
-			mejs.MediaElement(t.$media[0], meOptions);
+			var obj = mejs.MediaElement(t.$media[0], meOptions);
+			for(var html5Prop in obj) {
+				console.log("TEST = "+html5Prop+" "+typeof(this.media[html5Prop]));
+				if(typeof(this.media[html5Prop]) == "undefined") {
+					this.media[html5Prop] = obj[html5Prop];
+				}
+			}
 		},
 		
 		showControls: function(doAnimation) {

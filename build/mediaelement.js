@@ -414,6 +414,8 @@ mejs.PluginMediaElement = function (pluginid, pluginType, mediaUrl) {
 	this.pluginType = pluginType;
 	this.src = mediaUrl;
 	this.events = {};
+	
+	console.log("mejs.PluginMediaElement "+pluginid+" "+pluginType);
 };
 
 // JavaScript values and ExternalInterface methods that match HTML5 video properties methods
