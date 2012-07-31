@@ -414,8 +414,6 @@ mejs.PluginMediaElement = function (pluginid, pluginType, mediaUrl) {
 	this.pluginType = pluginType;
 	this.src = mediaUrl;
 	this.events = {};
-	
-	console.log("mejs.PluginMediaElement "+pluginid+" "+pluginType);
 };
 
 // JavaScript values and ExternalInterface methods that match HTML5 video properties methods
@@ -453,7 +451,7 @@ mejs.PluginMediaElement.prototype = {
 			if (this.pluginType == 'youtube') {
 				this.pluginApi.playVideo();
 			} else {
-				this.pluginApi.playMedia();
+				if(typeof(this.pluginApi.playMedia) == "function")this.pluginApi.playMedia();
 			}
 			this.paused = false;
 		}
@@ -462,7 +460,7 @@ mejs.PluginMediaElement.prototype = {
 		if (this.pluginApi != null) {
 			if (this.pluginType == 'youtube') {
 			} else {
-				this.pluginApi.loadMedia();
+				if(typeof(this.pluginApi.loadMedia) == "function")this.pluginApi.loadMedia();
 			}
 			
 			this.paused = false;
@@ -473,7 +471,7 @@ mejs.PluginMediaElement.prototype = {
 			if (this.pluginType == 'youtube') {
 				this.pluginApi.pauseVideo();
 			} else {
-				this.pluginApi.pauseMedia();
+				if(typeof(this.pluginApi.pauseMedia) == "function") this.pluginApi.pauseMedia();
 			}			
 			
 			
@@ -485,7 +483,7 @@ mejs.PluginMediaElement.prototype = {
 			if (this.pluginType == 'youtube') {
 				this.pluginApi.stopVideo();
 			} else {
-				this.pluginApi.stopMedia();
+				if(typeof(this.pluginApi.stopMedia) == "function") this.pluginApi.stopMedia();
 			}	
 			this.paused = true;
 		}
@@ -534,7 +532,7 @@ mejs.PluginMediaElement.prototype = {
 	// or an array [{src:'file.mp4',type:'video/mp4'},{src:'file.webm',type:'video/webm'}]
 	setSrc: function (url) {
 		if (typeof url == 'string') {
-			this.pluginApi.setSrc(mejs.Utility.absolutizeUrl(url));
+			if(typeof(this.pluginApi.setSrc) == "function") this.pluginApi.setSrc(mejs.Utility.absolutizeUrl(url));
 			this.src = mejs.Utility.absolutizeUrl(url);
 		} else {
 			var i, media;
@@ -554,7 +552,7 @@ mejs.PluginMediaElement.prototype = {
 			if (this.pluginType == 'youtube') {
 				this.pluginApi.seekTo(time);
 			} else {
-				this.pluginApi.setCurrentTime(time);
+				if(typeof(this.pluginApi.setCurrentTime) == "function") this.pluginApi.setCurrentTime(time);
 			}				
 			
 			
@@ -568,7 +566,7 @@ mejs.PluginMediaElement.prototype = {
 			if (this.pluginType == 'youtube') {
 				this.pluginApi.setVolume(volume * 100);
 			} else {
-				this.pluginApi.setVolume(volume);
+				if(typeof(this.pluginApi.setVolume) == "function") this.pluginApi.setVolume(volume);
 			}
 			this.volume = volume;
 		}
@@ -577,14 +575,14 @@ mejs.PluginMediaElement.prototype = {
 		if (this.pluginApi != null) {
 			if (this.pluginType == 'youtube') {
 				if (muted) {
-					this.pluginApi.mute();
+					if(typeof(this.pluginApi.mute) == "function") this.pluginApi.mute();
 				} else {
-					this.pluginApi.unMute();
+					if(typeof(this.pluginApi.unMute) == "function") this.pluginApi.unMute();
 				}
 				this.muted = muted;
 				this.dispatchEvent('volumechange');
 			} else {
-				this.pluginApi.setMuted(muted);
+				if(typeof(this.pluginApi.setMuted) == "function") this.pluginApi.setMuted(muted);
 			}
 			this.muted = muted;
 		}
@@ -1167,7 +1165,6 @@ mejs.HtmlMediaElementShim = {
 			case 'flash':
 				
 				var flashSwfToEmbed = this.getCorrectFlashSwfPlayer(playback.url, options);
-				
 				if (mejs.MediaFeatures.isIE) {
 					specialIEContainer = document.createElement('div');
 					container.appendChild(specialIEContainer);
@@ -1177,8 +1174,8 @@ mejs.HtmlMediaElementShim = {
 					'<param name="movie" value="' + options.pluginPath + flashSwfToEmbed + '?x=' + (new Date()) + '" />' +
 					'<param name="flashvars" value="' + initVars.join('&amp;') + '" />' +
 					'<param name="quality" value="high" />' +
-					'<param name="bgcolor" value="#000000" />' +
-					'<param name="wmode" value="transparent" />' +
+					'<param name="bgcolor" value="#FFFFFF" />' +
+					'<param name="wmode" value="'+options.ieFlashWindowMode+'" />' +
 					'<param name="allowScriptAccess" value="always" />' +
 					'<param name="allowFullScreen" value="true" />' +
 					'</object>';
@@ -1188,7 +1185,7 @@ mejs.HtmlMediaElementShim = {
 					'play="true" ' +
 					'loop="false" ' +
 					'quality="high" ' +
-					'bgcolor="#000000" ' +
+					'bgcolor="#FFFFFF" ' +
 					'wmode="transparent" ' +
 					'allowScriptAccess="always" ' +
 					'allowFullScreen="true" ' +

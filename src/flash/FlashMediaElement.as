@@ -446,8 +446,6 @@
 			loader.scrub._x = ns.time / duration * 208.9;
 			*/
 			
-			trace("seekBarPosition:"+seekBarPosition, "CanSeekToPosition: "+canSeekToPosition);
-			
 			if (seekBarPosition>0 && seekBarPosition<_mediaElement.duration() && canSeekToPosition) {
 					_mediaElement.setCurrentTime(seekBarPosition);
 			}
@@ -480,7 +478,6 @@
 			
 			if ( _controlStyle.toUpperCase() == "FLOATING" && _isFullScreen) {
 
-				trace("CONTROLS: floating");
 				_hoverTime.y=(_hoverTime.height/2)+1;
 				_hoverTime.x=0;
 				_controlBarBg.width = 300;
@@ -519,8 +516,7 @@
 
 				
 			} else {
-				trace("CONTROLS: normal, original");
-				
+		
 				/*
 				// Original style bottom display
 				_hoverTime.y=(_hoverTime.height/2)+1;
@@ -681,49 +677,49 @@
 		// END: Fullscreen
 
 		// START: external interface 
-		function playMedia() {
+		public function playMedia():void {
 			_output.appendText("play\n");
 			_mediaElement.play();
 		}
 
-		function loadMedia() {
+		public function loadMedia():void {
 			_output.appendText("load\n");
 			_mediaElement.load();
 		}
 
-		function pauseMedia() {
+		public function pauseMedia():void {
 			_output.appendText("pause\n");
 			_mediaElement.pause();
 		}
 
-		function setSrc(url:String) {
+		public function setSrc(url:String):void {
 			_output.appendText("setSrc: " + url + "\n");
 			_mediaElement.setSrc(url);
 		}
 
-		function stopMedia() {
+		public function stopMedia():void {
 			_output.appendText("stop\n");
 			_mediaElement.stop();
 		}
 
-		function setCurrentTime(time:Number) {
+		public function setCurrentTime(time:Number):void {
 			_output.appendText("seek: " + time.toString() + "\n");
 			_mediaElement.setCurrentTime(time);
 		}
 
-		function setVolume(volume:Number) {
+		public function setVolume(volume:Number):void {
 			_output.appendText("volume: " + volume.toString() + "\n");
 			_mediaElement.setVolume(volume);
 			toggleVolumeIcons(volume);
 		}
 
-		function setMuted(muted:Boolean) {
+		function setMuted(muted:Boolean):void {
 			_output.appendText("muted: " + muted.toString() + "\n");
 			_mediaElement.setMuted(muted);
 			toggleVolumeIcons(_mediaElement.getVolume());
 		}
 
-		function setVideoSize(width:Number, height:Number) {
+		public function setVideoSize(width:Number, height:Number):void {
 			_output.appendText("setVideoSize: " + width.toString() + "," + height.toString() + "\n");
 
 			_stageWidth = width;
@@ -738,7 +734,7 @@
 			_output.appendText("result: " + _video.width.toString() + "," + _video.height.toString() + "\n");
 		}
 		
-		function positionFullscreenButton(x:Number, y:Number, visibleAndAbove:Boolean ) {
+		public function positionFullscreenButton(x:Number, y:Number, visibleAndAbove:Boolean ):void {
 			
 			_output.appendText("position FS: " + x.toString() + "x" + y.toString() + "\n");
 			
@@ -767,7 +763,7 @@
 			}
 		}
 		
-		function hideFullscreenButton() {
+		public function hideFullscreenButton():void {
 		
 			//_fullscreenButton.visible = false;
 			_fullscreenButton.alpha = 0;

@@ -30,6 +30,8 @@
 		alwaysShowHours: false,
 		// hides the big play button overlay always
 		hideBigPlay: false,
+		// flash wmode
+		ieFlashWindowMode: "transparent",
 
 		// show framecount in timecode (##:00:00:00)
 		showTimecodeFrameCount: false,
@@ -654,7 +656,7 @@
 				}, 50);
 				
 				// adjust controls whenever window sizes (used to be in fullscreen only)
-				$(window).resize(function() {
+				$(window).bind("resize.MediaElementJs", function() {
 					
 					// don't resize for fullscreen mode				
 					if ( !(t.isFullScreen || (mejs.MediaFeatures.hasTrueNativeFullScreen && document.webkitIsFullScreen)) ) {
@@ -1022,15 +1024,15 @@
 			
 			if (t.media.pluginType == 'flash') {
 				t.media.remove();
-			} else if (t.media.pluginTyp == 'native') {
+			} else if (t.media.pluginType == 'native') {
 				t.media.prop('controls', true);
 			}
 			
 			// grab video and put it back in place
 			if (!t.isDynamic) {
-				t.$node.insertBefore(t.container)
+				t.$node.insertBefore(t.container);
 			}
-			
+			$(window).unbind("resize.MediaElementJs");
 			t.container.remove();
 		}
 	};

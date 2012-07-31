@@ -24,13 +24,14 @@ class htmlElementsAS2.SwfElementAS2{
 		private var _playAfterLoading:Boolean= true;
 		
 		private var _swfContent:MovieClip;
-		private var _swfCurrentFrame:Number = 1;
-		private var _swfTotalFrames:Number;
+		private var _swfCurrentFrame:Number = 0;
+		private var _swfTotalFrames:Number = 0;
 		private var _shouldCenter:Boolean = true;
 		
 		private var _frameRate:Number = 30;
 		
 		private var _holder:MovieClip;
+		private var _loader:MovieClipLoader;
 		private var _that:SwfElementAS2;
 		
 		public function duration():Number {
@@ -59,7 +60,7 @@ class htmlElementsAS2.SwfElementAS2{
 			_holder = holder;
 		}
 		
-		// events
+		// MovieClipLoader callbacks 
 		public function onLoadProgress (mc:MovieClip, loadedBytes:Number, totalBytes:Number):Void {
 			_bytesLoaded = loadedBytes;
 			_bytesTotal = totalBytes;
@@ -68,35 +69,39 @@ class htmlElementsAS2.SwfElementAS2{
 		public function onLoadError ():Void {
 			//do nothing, load has failed!
 		}
-		public function onLoadInit(mc:MovieClip):Void {
-			
+		public function onLoadInit(mc:MovieClip):Void {			
 			_isLoaded = true;
 			_swfContent = mc;
 			
-			
 			_swfTotalFrames = _swfContent._totalFrames; 
-			
+			_swfCurrentFrame = 0;
 			if(_swfContent) {
-				_swfContent.gotoAndStop(1);
-				_holder.addEventListener("onEnterFrame", handleFrameEnter, this);
-				
 				_duration =  _swfTotalFrames/_frameRate;
 				
 				sendEvent(HtmlMediaEventAS2.LOADEDDATA);
 				sendEvent(HtmlMediaEventAS2.CANPLAY);
 				_firedCanPlay = true;
-				if (_playAfterLoading == true) {
-					_that.play();
-				}	
+				
+				_holder.addEventListener("onEnterFrame", handleFrameEnter, this);
 			} else {
 				_that.onLoadError();
 			}
 		}
+		// end MovieClipLoader Callbacks
 		
-		private function handleFrameEnter():Void {
-			_swfCurrentFrame = _swfContent._currentframe;
+		//events
+		
+		public function handleFrameEnter():Void {
+			if(_isPaused && _playAfterLoading == true) {
+				_that.play();
+				_playAfterLoading = false;
+				return;
+			}
+			
 			_currentTime =_swfCurrentFrame / _frameRate;
 			if(!_isPaused) {
+				_swfCurrentFrame = _swfContent._currentframe;
+				
 				sendEvent(HtmlMediaEventAS2.TIMEUPDATE);
 				if(_swfCurrentFrame >= _swfTotalFrames) {
 					_currentTime = 0;
@@ -106,9 +111,7 @@ class htmlElementsAS2.SwfElementAS2{
 				}
 			}
 		}
-		//events
-
-
+		
 		// METHODS
 		public function setSrc(url:String):Void {
 			_currentUrl = url;
@@ -120,12 +123,14 @@ class htmlElementsAS2.SwfElementAS2{
 				return;
 		
 			_currentTime = 0;
-			_swfCurrentFrame = 1;
+			_swfCurrentFrame = 0;
 			
-			var swfLoader:MovieClipLoader = new MovieClipLoader();
-			swfLoader.checkPolicyFile = true;
-			swfLoader.addListener(this);
-			swfLoader.loadClip(_currentUrl, _holder.createEmptyMovieClip("loadedSwf", _holder.getNextHighestDepth()));
+			_loader = new MovieClipLoader();
+			_loader.checkPolicyFile = true;
+			_loader.addListener(this);
+
+			_swfContent = _holder.createEmptyMovieClip("loadedSwf", _holder.getNextHighestDepth());
+			_loader.loadClip(_currentUrl, _swfContent);
 			
 			sendEvent(HtmlMediaEventAS2.LOADSTART);
 		}
@@ -135,9 +140,10 @@ class htmlElementsAS2.SwfElementAS2{
 				load();
 				return;
 			}
-			_swfCurrentFrame = Math.max(2, _swfCurrentFrame);
-			_isPaused = false;
-			_swfContent.gotoAndPlay(_swfCurrentFrame);
+				
+			var frame:Number = Math.max(2, _swfCurrentFrame); //for some reason we start on frame 2
+			_swfContent.gotoAndPlay(frame);
+
 			didStartPlaying();
 		}
 
@@ -155,10 +161,11 @@ class htmlElementsAS2.SwfElementAS2{
 
 		public function setCurrentTime(pos:Number):Void {
 			_currentTime = pos;
-			_swfCurrentFrame = Math.round(_frameRate * _currentTime);
-			_swfCurrentFrame = Math.max(Math.min(_swfCurrentFrame, _swfTotalFrames), 1);
-			_swfContent.gotoAndPlay(_swfCurrentFrame);
-			_isPaused = false;
+			var frame:Number = Math.round(_frameRate * _currentTime);
+			frame = Math.max(Math.min(frame, _swfTotalFrames), 2);
+			
+			_swfContent.gotoAndPlay(frame);
+			
 			didStartPlaying();
 		}
 		

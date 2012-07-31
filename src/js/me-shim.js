@@ -487,7 +487,6 @@ mejs.HtmlMediaElementShim = {
 			case 'flash':
 				
 				var flashSwfToEmbed = this.getCorrectFlashSwfPlayer(playback.url, options);
-				
 				if (mejs.MediaFeatures.isIE) {
 					specialIEContainer = document.createElement('div');
 					container.appendChild(specialIEContainer);
@@ -497,8 +496,8 @@ mejs.HtmlMediaElementShim = {
 					'<param name="movie" value="' + options.pluginPath + flashSwfToEmbed + '?x=' + (new Date()) + '" />' +
 					'<param name="flashvars" value="' + initVars.join('&amp;') + '" />' +
 					'<param name="quality" value="high" />' +
-					'<param name="bgcolor" value="#000000" />' +
-					'<param name="wmode" value="transparent" />' +
+					'<param name="bgcolor" value="#FFFFFF" />' +
+					'<param name="wmode" value="'+options.ieFlashWindowMode+'" />' +
 					'<param name="allowScriptAccess" value="always" />' +
 					'<param name="allowFullScreen" value="true" />' +
 					'</object>';
@@ -508,7 +507,7 @@ mejs.HtmlMediaElementShim = {
 					'play="true" ' +
 					'loop="false" ' +
 					'quality="high" ' +
-					'bgcolor="#000000" ' +
+					'bgcolor="#FFFFFF" ' +
 					'wmode="transparent" ' +
 					'allowScriptAccess="always" ' +
 					'allowFullScreen="true" ' +

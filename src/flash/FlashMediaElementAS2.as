@@ -63,8 +63,8 @@
 
 	 function initFlashMediaElement():Void {
 
-		// show allow this player to be called from a different domain than the HTML page hosting the player
-		System.security.allowDomain("*");
+		
+		
 		// get parameters
 		var params:Object = _root;
 		_mediaUrl = (params['file'] != undefined) ? String(params['file']) : "";
@@ -482,7 +482,7 @@
 	}
 	// START: Fullscreen		
 	function enterFullscreen() {
-		Stage.displayState = "fullScreen";
+		//Stage.displayState = "fullScreen";
 		
 		repositionVideo(true);
 		
@@ -492,7 +492,7 @@
 	}
 	
 	function exitFullscreen() {
-		Stage.displayState = "normal";
+		//Stage.displayState = "normal";
 		
 		_controlBar._visible = false;
 		
@@ -549,7 +549,7 @@
 	function stageFullScreenChanged() {
 		//_fullscreenButton._visible = false;
 		_fullscreenButton._alpha = 0;
-		_isFullScreen = (Stage.displayState != "normal");
+		_isFullScreen =  false;//(Stage.displayState != "normal");
 		
 		sendEvent(HtmlMediaEventAS2.FULLSCREENCHANGE, "isFullScreen:" + _isFullScreen );
 
@@ -627,7 +627,7 @@
 			_nativeVideoWidth = VideoElement(_mediaElement).videoWidth;
 			_nativeVideoHeight = VideoElement(_mediaElement).videoHeight;
 
-			 if(stage.displayState == "fullScreen" ) {
+			 if(1 == 2) { //if(stage.displayState == "fullScreen" ) {
 				setVideoSize(_nativeVideoWidth, _nativeVideoHeight);
 				repositionVideo(true);
 			 } else {
@@ -663,17 +663,17 @@
 		//trace("CurrentProgress:"+_mediaElement.currentProgress());
 		
 		
-			if (eventValues == null)
-				eventValues == "";
+		if (eventValues == null)
+			eventValues == "";
 
-			if (_isVideo) {
-				eventValues += (eventValues != "" ? "," : "") + "isFullScreen:" + _isFullScreen;
-			}
+		if (_isVideo) {
+			eventValues += (eventValues != "" ? "," : "") + "isFullScreen:" + _isFullScreen;
+		}
 
-			eventValues = "{" + eventValues + "}";
-			if(ExternalInterface.available) {
-				ExternalInterface.call("setTimeout", "mejs.MediaPluginBridge.fireEvent('" + _externalObjectId + "','" + eventName + "'," + eventValues + ")",0);
-			}
+		eventValues = "{" + eventValues + "}";
+		if(ExternalInterface.available) {
+			ExternalInterface.call("setTimeout", "mejs.MediaPluginBridge.fireEvent('" + _externalObjectId + "','" + eventName + "'," + eventValues + ")",0);
+		}
 	}
 	 function getExtenstion(mediaUrl:String):String {
 		if(!mediaUrl)
