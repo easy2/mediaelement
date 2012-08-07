@@ -715,12 +715,13 @@
 			
 				// do we have the native dimensions yet?
 				var 
+					containerParent = t.container.parent(),
 					nativeWidth = (t.media.videoWidth && t.media.videoWidth > 0) ? t.media.videoWidth : t.options.defaultVideoWidth,
 					nativeHeight = (t.media.videoHeight && t.media.videoHeight > 0) ? t.media.videoHeight : t.options.defaultVideoHeight,
-					parentWidth = t.container.parent().width(),
+					parentWidth = containerParent.width(),
 					newHeight = parseInt(parentWidth * nativeHeight/nativeWidth, 10);
 					
-				if (t.container.parent()[0].tagName.toLowerCase() === 'body') { // && t.container.siblings().count == 0) {
+				if (containerParent.length > 0 && containerParent[0].tagName.toLowerCase() === 'body') { // && t.container.siblings().count == 0) {
 					parentWidth = $(window).width();
 					newHeight = $(window).height();
 				}
@@ -876,6 +877,7 @@
 						media.pause();
 					}
 				});
+			
 			if(player.options.hideBigPlay === true) {
 				bigPlay.remove();
 			}

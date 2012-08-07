@@ -240,7 +240,7 @@ mejs.PluginMediaElement.prototype = {
 	setVideoSize: function (width, height) {
 		
 		//if (this.pluginType == 'flash' || this.pluginType == 'silverlight') {
-			if ( this.pluginElement.style) {
+			if (this.pluginElement && this.pluginElement.style) {
 				this.pluginElement.style.width = width + 'px';
 				this.pluginElement.style.height = height + 'px';
 			}
@@ -320,6 +320,7 @@ mejs.PluginMediaElement.prototype = {
 	},
 
 	remove: function() {
-		mejs.Utility.removeSwf(this.pluginElement.id);
+		if(this.pluginElement)
+			mejs.Utility.removeSwf(this.pluginElement.id);
 	}
 };
