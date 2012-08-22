@@ -339,12 +339,7 @@
 			
 
 			// create MediaElement shim
-			var obj = mejs.MediaElement(t.$media[0], meOptions);
-			for(var html5Prop in obj) {
-				if(typeof(this.media[html5Prop]) == "undefined") {
-					this.media[html5Prop] = obj[html5Prop];
-				}
-			}
+			mejs.MediaElement(t.$media[0], meOptions);
 		},
 		
 		showControls: function(doAnimation) {
