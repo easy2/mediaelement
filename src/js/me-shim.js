@@ -363,6 +363,7 @@ mejs.HtmlMediaElementShim = {
 		var ext = url.substring(url.lastIndexOf('.') + 1);
 		if(ext && ext.toLowerCase() == "swf") {
 			return 'application/x-shockwave-flash';
+		}
 		return (/(mp4|m4v|ogg|ogv|webm|webmv|flv|wmv|mpeg|mov)/gi.test(ext) ? 'video' : 'audio') + '/' + this.getTypeFromExtension(ext);
 	},
 	
