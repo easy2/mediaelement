@@ -2646,6 +2646,10 @@ if (typeof jQuery != 'undefined') {
 			if (!t.isDynamic) {
 				t.$node.insertBefore(t.container);
 			}
+			if(t && t.node) {
+				t.node.src = "";
+			}
+			
 			$(window).unbind("resize.MediaElementJs");
 			t.container.remove();
 		}
