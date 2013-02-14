@@ -279,7 +279,7 @@ mejs.MediaFeatures = {
 		t.isWebkit = (ua.match(/webkit/gi) !== null);
 		t.isGecko = (ua.match(/gecko/gi) !== null) && !t.isWebkit;
 		t.isOpera = (ua.match(/opera/gi) !== null);
-		t.hasTouch = ('ontouchstart' in window);
+		t.hasTouch = ('ontouchstart' in window && !t.isChrome);
 
 		// create HTML5 media elements for IE before 9, get a <video> element for fullscreen detection
 		for (i=0; i<html5Elements.length; i++) {
@@ -3157,6 +3157,8 @@ if (typeof jQuery != 'undefined') {
 			mute
 				.hover(function() {
 					volumeSlider.show();
+					//chrome needs this after .show() to correctly calulate positions
+					positionVolumeHandle(media.volume);
 					mouseIsOver = true;
 				}, function() {
 					mouseIsOver = false;	

@@ -1588,6 +1588,8 @@ if (typeof jQuery != 'undefined') {
 			mute
 				.hover(function() {
 					volumeSlider.show();
+					//chrome needs this after .show() to correctly calulate positions
+					positionVolumeHandle(media.volume);
 					mouseIsOver = true;
 				}, function() {
 					mouseIsOver = false;	
