@@ -207,15 +207,10 @@
 		_scrubLoaded._xscale=0;
 		
 		setUpExternalInterfaceCallbacks();
-
-		if (_preload != "none") {
-			_mediaElement.load();
-			
-			if (_autoplay) {
-				_mediaElement.play();
-			}
-		} else if (_autoplay) {
-			_mediaElement.load();
+		
+		_mediaElement.load();
+		
+		if (_autoplay) {
 			_mediaElement.play();
 		}
 
@@ -589,6 +584,7 @@
 	function setVideoSize(width:Number, height:Number) {
 		_stageWidth = width;
 		_stageHeight = height;
+		repositionVideo(_isFullScreen);
 	}
 	function positionFullscreenButton(x:Number, y:Number, visibleAndAbove:Boolean ) {
 		if (visibleAndAbove) {
@@ -615,6 +611,7 @@
 	// END: external interface
 	
 	function repositionVideo(fullscreen:Boolean):Void {
+		_mediaElement.resize(_stageWidth, _stageHeight);
 		positionControls(false);
 	}
 

@@ -71,6 +71,7 @@ class htmlElementsAS2.SwfElementAS2{
 		}
 		public function onLoadInit(mc:MovieClip):Void {			
 			_isLoaded = true;
+
 			_swfContent = mc;
 			
 			_swfTotalFrames = _swfContent._totalFrames; 
@@ -92,17 +93,19 @@ class htmlElementsAS2.SwfElementAS2{
 		//events
 		
 		public function handleFrameEnter():Void {
+			
 			if(_isPaused && _playAfterLoading == true) {
 				_that.play();
 				_playAfterLoading = false;
 				return;
 			}
 			
-			_currentTime =_swfCurrentFrame / _frameRate;
 			if(!_isPaused) {
 				_swfCurrentFrame = _swfContent._currentframe;
+				_currentTime =_swfCurrentFrame / _frameRate;
 				
 				sendEvent(HtmlMediaEventAS2.TIMEUPDATE);
+				
 				if(_swfCurrentFrame >= _swfTotalFrames) {
 					_currentTime = 0;
 					_isEnded = true;
@@ -137,7 +140,6 @@ class htmlElementsAS2.SwfElementAS2{
 
 		public function play():Void {
 			if (!_isLoaded) {
-				load();
 				return;
 			}
 				
@@ -163,7 +165,7 @@ class htmlElementsAS2.SwfElementAS2{
 			_currentTime = pos;
 			var frame:Number = Math.round(_frameRate * _currentTime);
 			frame = Math.max(Math.min(frame, _swfTotalFrames), 2);
-			
+
 			_swfContent.gotoAndPlay(frame);
 			
 			didStartPlaying();
@@ -186,7 +188,7 @@ class htmlElementsAS2.SwfElementAS2{
 
 			_sound.setVolume(_volume * 100);
 			_isMuted = (_volume == 0);
-
+			
 			sendEvent(HtmlMediaEventAS2.VOLUMECHANGE);
 		}
 		
@@ -212,6 +214,12 @@ class htmlElementsAS2.SwfElementAS2{
 			}
 
 			_isMuted = muted;
+		}
+		public function resize(w:Number, h:Number):Void {
+			if(_swfContent != null) {
+				//_swfContent._x = Math.max(0, (w - _holder._width)/2);
+				//_swfContent._y = Math.max(0, (h - _holder._height)/2);
+			}
 		}
 
 		private function sendEvent(eventName:String) {

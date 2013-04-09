@@ -31,7 +31,7 @@
 		private var _debug:Boolean;
 		private var _isVideo:Boolean;
 		private var _isSwf:Boolean;
-		private var _video:Video;
+		private var _video:DisplayObject;
 		private var _timerRate:Number;
 		private var _stageWidth:Number;
 		private var _stageHeight:Number;
@@ -165,13 +165,14 @@
 			// create media element
 			if(_isSwf) {
 				_mediaElement = new SwfElement(this, _autoplay, _preload, _timerRate, _startVolume);
-				addChild(_mediaElement as DisplayObject);
+				_video = _mediaElement as DisplayObject;
+				addChild(_video);
 			} else if (_isVideo) {
 				_mediaElement = new VideoElement(this, _autoplay, _preload, _timerRate, _startVolume);
 				_video = (_mediaElement as VideoElement).video;
 				_video.width = _stageWidth;
 				_video.height = _stageHeight;
-				_video.smoothing = _enableSmoothing;
+				(_video as Video).smoothing = _enableSmoothing;
 				(_mediaElement as VideoElement).setReference(this);
 				//_video.scaleMode = VideoScaleMode.MAINTAIN_ASPECT_RATIO;
 				addChild(_video);
@@ -532,7 +533,7 @@
 				*/
 				
 				// FLOATING MODE BOTTOM DISPLAY - similar to normal
-				trace("THAT WAY!");
+				
 				_hoverTime.y=(_hoverTime.height/2)+1;
 				_hoverTime.x=0;
 				_controlBarBg.width = stage.stageWidth;
@@ -581,8 +582,6 @@
 		}
 
 		function resizeHandler(e:Event):void {
-			//_video.scaleX = stage.stageWidth / _stageWidth;
-			//_video.scaleY = stage.stageHeight / _stageHeight;
 			//positionControls();
 			
 			repositionVideo();
@@ -728,10 +727,7 @@
 			if (_video != null) {
 				repositionVideo();
 				positionControls();
-				//_fullscreenButton.x = stage.stageWidth - _fullscreenButton.width - 10;
 			}
-
-			_output.appendText("result: " + _video.width.toString() + "," + _video.height.toString() + "\n");
 		}
 		
 		public function positionFullscreenButton(x:Number, y:Number, visibleAndAbove:Boolean ):void {
